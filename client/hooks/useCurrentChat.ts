@@ -1,9 +1,12 @@
 import { IUser } from "@/types";
-import { useState } from "react";
+import { create } from "zustand";
 
-function useCurrentChat() {
-  const [currentContact, setCurrentContact] = useState<IUser | null>(null);
-  return { currentContact, setCurrentContact };
-}
+type ICurrentChat = {
+  currentChat: IUser | null;
+  setCurrentChat: (user: IUser | null) => void;
+};
 
-export default useCurrentChat;
+export const useCurrentChat = create<ICurrentChat>()((set) => ({
+  currentChat: null,
+  setCurrentChat: (user) => set({ currentChat: user }),
+}));

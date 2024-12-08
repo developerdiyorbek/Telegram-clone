@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
-import useCurrentChat from "@/hooks/useCurrentChat";
+import { useCurrentChat } from "@/hooks/useCurrentChat";
 
 interface Props {
   contacts: IUser[];
@@ -14,12 +14,12 @@ interface Props {
 
 function ContactList({ contacts }: Props) {
   const router = useRouter();
-  const { currentContact, setCurrentContact } = useCurrentChat();
+  const { setCurrentChat, currentChat } = useCurrentChat();
 
   function renderContact(contact: IUser) {
     const onChat = () => {
-      if (currentContact?._id === contact._id) return;
-      setCurrentContact(contact);
+      if (currentChat?._id === contact._id) return;
+      setCurrentChat(contact);
       router.push(`/?chat=${contact._id}`);
     };
 
@@ -27,7 +27,7 @@ function ContactList({ contacts }: Props) {
       <div
         className={cn(
           "flex justify-between items-center cursor-pointer hover:bg-secondary/50 p-2",
-          currentContact?._id === contact._id && "bg-secondary/50"
+          currentChat?._id === contact._id && "bg-secondary/50"
         )}
         onClick={onChat}
       >
