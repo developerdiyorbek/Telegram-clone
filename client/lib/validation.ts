@@ -13,3 +13,8 @@ export const otpSchema = z
       .min(6, { message: "Your one-time password must be 6 characters." }),
   })
   .merge(emailSchema);
+
+export const messageSchema = z.object({
+  text: z.string().min(1, { message: "Message must be at least 1 character." }),
+  image: z.string().optional(),
+});

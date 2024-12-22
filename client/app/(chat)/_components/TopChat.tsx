@@ -1,7 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
 import { useCurrentChat } from "@/hooks/useCurrentChat";
-import { Settings2 } from "lucide-react";
+import SettingsSheet from "./SettingsSheet";
 
 const TopChat = () => {
   const { currentChat } = useCurrentChat();
@@ -41,9 +40,7 @@ const TopChat = () => {
         </div>
       </div>
 
-      <Button size={"icon"} variant={"secondary"}>
-        <Settings2 />
-      </Button>
+      <SettingsSheet />
     </div>
   );
 };

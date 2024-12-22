@@ -7,36 +7,67 @@ import AddContact from "./_components/AddContact";
 import { useCurrentChat } from "@/hooks/useCurrentChat";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { emailSchema } from "@/lib/validation";
+import { emailSchema, messageSchema } from "@/lib/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import TopChat from "./_components/TopChat";
 import ChatMessages from "./_components/ChatMessages";
+import { IUser } from "@/types";
 
-const contacts = [
+const contacts: IUser[] = [
   {
     email: "diyorbeksulaymonov70@gmail.com",
     _id: "1",
+    firstName: "Diyorbek",
+    lastName: "Sulaymonov",
+    bio: "I am a software engineer",
   },
   {
     email: "sardor@gmail.com",
     _id: "2",
+    firstName: "Diyorbek",
+    lastName: "Sulaymonov",
   },
   {
     email: "alibek@gmail.com",
     _id: "3",
+    firstName: "Diyorbek",
+    lastName: "Sulaymonov",
   },
   {
     email: "kamron@gmail.com",
     _id: "4",
+    firstName: "Diyorbek",
+    lastName: "Sulaymonov",
+  },
+];
+
+const messages = [
+  {
+    text: "Hello world",
+    id: 1,
+  },
+  {
+    text: "Java",
+    id: 2,
+  },
+  {
+    text: "Javascript",
+    id: 3,
   },
 ];
 
 function Page() {
   const { currentChat } = useCurrentChat();
   const router = useRouter();
+
   const contactForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
     defaultValues: { email: "" },
+  });
+
+  const messageForm = useForm<z.infer<typeof messageSchema>>({
+    resolver: zodResolver(emailSchema),
+    defaultValues: { image: "", text: "" },
   });
 
   useEffect(() => {
@@ -44,6 +75,10 @@ function Page() {
   }, []);
 
   const onCreateContact = (values: z.infer<typeof emailSchema>) => {
+    console.log(values);
+  };
+
+  const onSendMessage = (values: z.infer<typeof messageSchema>) => {
     console.log(values);
   };
 
@@ -66,7 +101,11 @@ function Page() {
         {currentChat?._id && (
           <div className="w-full relative">
             <TopChat />
-            <ChatMessages />
+            <ChatMessages
+              messageForm={messageForm}
+              onSendMessage={onSendMessage}
+              messages={messages}
+            />
           </div>
         )}
       </div>
