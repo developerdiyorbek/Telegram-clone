@@ -27,7 +27,6 @@ import { useMutation } from "@tanstack/react-query";
 import { generateToken } from "@/lib/generateToken";
 import { axiosClient } from "@/http/axios";
 import toast from "react-hot-toast";
-import { isAxiosError } from "axios";
 
 function EmailForm() {
   const { data: session } = useSession();
@@ -58,12 +57,6 @@ function EmailForm() {
       otpForm.setValue("email", email);
       setVerify(true);
     },
-    onError: (error: Error) => {
-      const message =
-        (isAxiosError(error) && error.response?.data?.message) ||
-        "An unknown error occurred";
-      toast.error(message);
-    },
   });
 
   function onEmailSubmit(values: z.infer<typeof oldEmailSchema>) {
@@ -83,12 +76,6 @@ function EmailForm() {
     onSuccess: () => {
       toast.success("Email updated successfully");
       signOut();
-    },
-    onError: (error: Error) => {
-      const message =
-        (isAxiosError(error) && error.response?.data?.message) ||
-        "An unknown error occurred";
-      toast.error(message);
     },
   });
 

@@ -2,10 +2,24 @@
 
 import { ChildProps } from "@/types";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Toaster } from "react-hot-toast";
+import toast, { Toaster } from "react-hot-toast";
 import SessionProvider from "./SessionProvider";
+import { isAxiosError } from "axios";
 
-const queryClient = new QueryClient();
+const handleCatchError = (error: Error) => {
+  const message =
+    (isAxiosError(error) && error.response?.data?.message) ||
+    "An unknown error occurred";
+  toast.error(message);
+};
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    mutations: {
+      onError: handleCatchError,
+    },
+  },
+});
 
 function MainProvider({ children }: ChildProps) {
   return (
