@@ -24,6 +24,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
+import { axiosClient } from "@/http/axios";
+import { generateToken } from "@/lib/generateToken";
+import { useMutation } from "@tanstack/react-query";
 import {
   LogIn,
   Menu,
@@ -32,16 +35,34 @@ import {
   Sun,
   Upload,
   UserPlus,
+  Volume2,
   VolumeOff,
 } from "lucide-react";
 import { signOut, useSession } from "next-auth/react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
+import toast from "react-hot-toast";
 
 const Settings = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { resolvedTheme, setTheme } = useTheme();
-  const { data: session } = useSession();
+  const { data: session, update } = useSession();
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (muted: boolean) => {
+      const token = await generateToken(session?.currentUser?._id);
+      const { data } = await axiosClient.put(
+        "/api/user/profile",
+        { muted },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Profile updated successfully");
+      update();
+    },
+  });
 
   return (
     <>
@@ -77,10 +98,20 @@ const Settings = () => {
 
             <div className="flex justify-between items-center p-2 hover:bg-secondary">
               <div className="flex items-center gap-1">
-                <VolumeOff size={16} />
-                <span className="text-sm">Mute</span>
+                {!session?.currentUser?.muted ? (
+                  <Volume2 size={16} />
+                ) : (
+                  <VolumeOff size={16} />
+                )}
+                <span className="text-sm">
+                  {!session?.currentUser?.muted ? "Mute" : "Unmute"}
+                </span>
               </div>
-              <Switch />
+              <Switch
+                checked={!session?.currentUser?.muted}
+                onCheckedChange={() => mutate(!session?.currentUser?.muted)}
+                disabled={isPending}
+              />
             </div>
 
             <div className="flex justify-between items-center p-2 hover:bg-secondary">
