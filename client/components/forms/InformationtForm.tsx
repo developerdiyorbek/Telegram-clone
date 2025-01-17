@@ -16,15 +16,40 @@ import { Label } from "../ui/label";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
+import { useSession } from "next-auth/react";
+import { useMutation } from "@tanstack/react-query";
+import { axiosClient } from "@/http/axios";
+import toast from "react-hot-toast";
+import { generateToken } from "@/lib/generateToken";
 
 function InformationtForm() {
+  const { data: session, update } = useSession();
+
   const form = useForm<z.infer<typeof profileSchema>>({
     resolver: zodResolver(profileSchema),
-    defaultValues: { firstName: "", lastName: "", bio: "" },
+    defaultValues: {
+      firstName: session?.currentUser?.firstName || "",
+      lastName: session?.currentUser?.lastName || "",
+      bio: session?.currentUser?.bio || "",
+    },
+  });
+
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (payload: z.infer<typeof profileSchema>) => {
+      const token = await generateToken(session?.currentUser?._id);
+      const { data } = await axiosClient.put("/api/user/profile", payload, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Profile updated successfully");
+      update();
+    },
   });
 
   const onSubmit = (data: z.infer<typeof profileSchema>) => {
-    console.log(data);
+    mutate(data);
   };
 
   return (
@@ -37,7 +62,12 @@ function InformationtForm() {
             <FormItem>
               <Label>First name</Label>
               <FormControl>
-                <Input placeholder="Oman" className="bg-secondary" {...field} />
+                <Input
+                  placeholder="Oman"
+                  className="bg-secondary"
+                  {...field}
+                  disabled={isPending}
+                />
               </FormControl>
               <FormMessage className="text-xs text-red-500" />
             </FormItem>
@@ -50,7 +80,12 @@ function InformationtForm() {
             <FormItem>
               <Label>Last name</Label>
               <FormControl>
-                <Input placeholder="Ali" className="bg-secondary" {...field} />
+                <Input
+                  placeholder="Ali"
+                  className="bg-secondary"
+                  {...field}
+                  disabled={isPending}
+                />
               </FormControl>
             </FormItem>
           )}
@@ -66,12 +101,13 @@ function InformationtForm() {
                   placeholder="Enter anyhting about yourself"
                   className="bg-secondary"
                   {...field}
+                  disabled={isPending}
                 />
               </FormControl>
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
+        <Button type="submit" className="w-full" disabled={isPending}>
           Submit
         </Button>
       </form>
