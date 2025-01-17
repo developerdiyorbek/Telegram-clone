@@ -7,8 +7,13 @@ export interface ChildProps {
 export interface IUser {
   email: string;
   _id: string;
-  avatar?: string;
+  avatar: string;
   firstName: string;
-  bio?: string;
-  lastName?: string;
+  lastName: string;
+  bio: string;
+  isVerified: boolean;
+  muted: boolean;
+  notificationSound: string;
+  sendingSound: string;
+  contacts: IUser[];
 }

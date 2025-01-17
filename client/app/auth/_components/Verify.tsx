@@ -17,26 +17,50 @@ import {
 } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { axiosClient } from "@/http/axios";
 import { otpSchema } from "@/lib/validation";
+import { IUser } from "@/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { useRouter } from "next/navigation";
 import React from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { z } from "zod";
+import { signIn } from "next-auth/react";
 
 const Verify = () => {
   const { email } = useAuth();
-  const router = useRouter();
 
   const form = useForm<z.infer<typeof otpSchema>>({
     resolver: zodResolver(otpSchema),
     defaultValues: { email, otp: "	" },
   });
 
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (otp: string) => {
+      const { data } = await axiosClient.post<{ user: IUser }>(
+        "/api/auth/verify",
+        { email, otp }
+      );
+      return data;
+    },
+    onSuccess: ({ user }) => {
+      console.log(user);
+      signIn("credentials", { email: user?.email, callbackUrl: "/" });
+      toast.success("Successfully verified");
+    },
+    onError: (error: Error) => {
+      const message =
+        (isAxiosError(error) && error.response?.data?.message) ||
+        "An unknown error occurred";
+      return toast.error(message);
+    },
+  });
+
   function onSubmit(values: z.infer<typeof otpSchema>) {
-    console.log(values);
-    router.push("/");
+    mutate(values.otp);
   }
 
   return (
@@ -75,6 +99,7 @@ const Verify = () => {
                 <Label>One-Time Password</Label>
                 <FormControl>
                   <InputOTP
+                    disabled={isPending}
                     maxLength={6}
                     className="w-full"
                     pattern={REGEXP_ONLY_DIGITS}
@@ -116,7 +141,12 @@ const Verify = () => {
             )}
           />
 
-          <Button type="submit" className="w-full" size={"lg"}>
+          <Button
+            type="submit"
+            className="w-full"
+            size={"lg"}
+            disabled={isPending}
+          >
             Submit
           </Button>
         </form>

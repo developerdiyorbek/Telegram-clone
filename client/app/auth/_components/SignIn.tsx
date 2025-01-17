@@ -11,10 +11,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuth";
+import { axiosClient } from "@/http/axios";
 import { emailSchema } from "@/lib/validation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { isAxiosError } from "axios";
 import React from "react";
 import { useForm } from "react-hook-form";
+import toast from "react-hot-toast";
 import { z } from "zod";
 
 type SignInSchema = z.infer<typeof emailSchema>;
@@ -27,9 +31,29 @@ const SignIn = () => {
     defaultValues: { email: "" },
   });
 
-  function onSubmit(values: SignInSchema) {
-    setStep("verify");
-    setEmail(values.email);
+  const { mutate, isPending } = useMutation({
+    mutationFn: async (email: string) => {
+      const { data } = await axiosClient.post<{ email: string }>(
+        "/api/auth/login",
+        { email }
+      );
+      return data;
+    },
+    onSuccess: (res) => {
+      setEmail(res.email);
+      setStep("verify");
+      toast.success("Email sent");
+    },
+    onError: (error: Error) => {
+      const message =
+        (isAxiosError(error) && error.response?.data?.message) ||
+        "An unknown error occurred";
+      return toast.error(message);
+    },
+  });
+
+  function onSubmit(values: z.infer<typeof emailSchema>) {
+    mutate(values.email);
   }
 
   return (
@@ -50,6 +74,7 @@ const SignIn = () => {
                   <Input
                     placeholder="info@sammi.ac"
                     className="h-10 bg-secondary"
+                    disabled={isPending}
                     {...field}
                   />
                 </FormControl>
@@ -57,7 +82,12 @@ const SignIn = () => {
               </FormItem>
             )}
           />
-          <Button type="submit" className="w-full" size={"lg"}>
+          <Button
+            type="submit"
+            className="w-full"
+            size={"lg"}
+            disabled={isPending}
+          >
             Submit
           </Button>
         </form>

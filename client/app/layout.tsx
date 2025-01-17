@@ -3,6 +3,7 @@ import "./globals.css";
 import { Space_Grotesk } from "next/font/google";
 import { ChildProps } from "@/types";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import MainProvider from "@/components/providers/MainProvider";
 
 const spaceGrotesk = Space_Grotesk({
   weight: ["300", "400", "500", "600", "700"],
@@ -25,14 +26,16 @@ export default function RootLayout({ children }: ChildProps) {
         className={`${spaceGrotesk.variable} antialiased`}
         suppressHydrationWarning
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          {children}
-        </ThemeProvider>
+        <MainProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            {children}
+          </ThemeProvider>
+        </MainProvider>
       </body>
     </html>
   );
