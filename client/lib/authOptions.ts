@@ -30,6 +30,7 @@ export const authOptions: NextAuthOptions = {
         session.currentUser = user;
         return session;
       }
+
       session.currentUser = isExistingUser;
 
       return session;

@@ -1,7 +1,7 @@
 "use client";
 
 import ContactList from "./_components/ContactList";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AddContact from "./_components/AddContact";
 import { useCurrentChat } from "@/hooks/useCurrentChat";
@@ -12,52 +12,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import TopChat from "./_components/TopChat";
 import ChatMessages from "./_components/ChatMessages";
 import { IUser } from "@/types";
-
-const contacts: IUser[] = [
-  {
-    email: "diyorbeksulaymonov70@gmail.com",
-    _id: "1",
-    firstName: "Diyorbek",
-    lastName: "Sulaymonov",
-    bio: "I am a software engineer",
-  },
-  {
-    email: "sardor@gmail.com",
-    _id: "2",
-    firstName: "Diyorbek",
-    lastName: "Sulaymonov",
-  },
-  {
-    email: "alibek@gmail.com",
-    _id: "3",
-    firstName: "Diyorbek",
-    lastName: "Sulaymonov",
-  },
-  {
-    email: "kamron@gmail.com",
-    _id: "4",
-    firstName: "Diyorbek",
-    lastName: "Sulaymonov",
-  },
-];
-
-const messages = [
-  {
-    text: "Hello world",
-    id: 1,
-  },
-  {
-    text: "Java",
-    id: 2,
-  },
-  {
-    text: "Javascript",
-    id: 3,
-  },
-];
+import { useLoading } from "@/hooks/useLoading";
+import { useSession } from "next-auth/react";
+import { axiosClient } from "@/http/axios";
+import { generateToken } from "@/lib/generateToken";
+import toast from "react-hot-toast";
+import { isAxiosError } from "axios";
+import { Loader2 } from "lucide-react";
 
 function Page() {
+  const [contacts, setContacts] = useState<IUser[]>([]);
   const { currentChat } = useCurrentChat();
+  const { setCreating, setLoading, isLoading } = useLoading();
+  const { data: session } = useSession();
   const router = useRouter();
 
   const contactForm = useForm<z.infer<typeof emailSchema>>({
@@ -70,14 +37,57 @@ function Page() {
     defaultValues: { image: "", text: "" },
   });
 
+  const getContacts = async () => {
+    setLoading(true);
+    const token = await generateToken(session?.currentUser?._id);
+    try {
+      const { data } = await axiosClient.get<{ contacts: IUser[] }>(
+        "/api/user/contacts",
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setContacts(data.contacts);
+    } catch {
+      toast.error("Cannot fetch contacts");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     router.replace("/");
   }, []);
 
-  const onCreateContact = (values: z.infer<typeof emailSchema>) => {
-    console.log(values);
-  };
+  useEffect(() => {
+    if (session?.currentUser?._id) {
+      getContacts();
+    }
+  }, [session?.currentUser]);
 
+  const onCreateContact = async (values: z.infer<typeof emailSchema>) => {
+    setCreating(true);
+    const token = await generateToken(session?.currentUser?._id);
+    try {
+      const { data } = await axiosClient.post<{ contact: IUser }>(
+        "/api/user/contact",
+        values,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      setContacts((prev) => [...prev, data.contact]);
+      toast.success("Contact added successfully");
+      contactForm.reset();
+    } catch (error) {
+      const message =
+        (isAxiosError(error) && error.response?.data?.message) ||
+        "An unknown error occurred";
+      toast.error(message);
+    } finally {
+      setCreating(false);
+    }
+  };
   const onSendMessage = (values: z.infer<typeof messageSchema>) => {
     console.log(values);
   };
@@ -85,11 +95,13 @@ function Page() {
   return (
     <>
       <div className="w-80 h-screen border-r fixed inset-0 z-50">
-        {/* <div className="w-full h-[95vh] flex justify-center items-center">
-          <Loader2 size={50} className="animate-spin" />
-        </div> */}
+        {isLoading && (
+          <div className="w-full h-[95vh] flex justify-center items-center">
+            <Loader2 size={50} className="animate-spin" />
+          </div>
+        )}
 
-        <ContactList contacts={contacts} />
+        {!isLoading && <ContactList contacts={contacts} />}
       </div>
       <div className="pl-80 w-full">
         {!currentChat?._id && (
@@ -104,7 +116,7 @@ function Page() {
             <ChatMessages
               messageForm={messageForm}
               onSendMessage={onSendMessage}
-              messages={messages}
+              messages={[]}
             />
           </div>
         )}
