@@ -1,9 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useCurrentChat } from "@/hooks/useCurrentChat";
 import SettingsSheet from "./SettingsSheet";
+import { useAuth } from "@/hooks/useAuth";
 
 const TopChat = () => {
   const { currentChat } = useCurrentChat();
+  const { onlineUsers } = useAuth();
 
   return (
     <div className="w-full flex items-center justify-between sticky top-0 z-50 h-[8vh] p-2 border-b bg-background">
@@ -32,10 +34,13 @@ const TopChat = () => {
 						</div>
 					</div> */}
           <p className="text-xs">
-            {/* Online */}
-            {/* <span className='text-green-500'>●</span> Online */}
-            {/* Offline */}
-            <span className="text-muted-foreground">●</span> Last seen recently
+            {onlineUsers.some((item) => item._id === currentChat?._id) ? (
+              <span className="text-green-500">● online</span>
+            ) : (
+              <span className="text-muted-foreground">
+                ● Last seen recently
+              </span>
+            )}
           </p>
         </div>
       </div>

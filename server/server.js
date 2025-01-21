@@ -9,12 +9,7 @@ const errorMiddleware = require("./middlewares/error.middleware");
 const app = express();
 
 app.use(express.json());
-app.use(
-  cors({
-    origin: process.env.ORIGIN_CLIENT_URL,
-    methods: ["GET", "POST", "PUT", "DELETE"],
-  })
-);
+app.use(cors());
 
 app.use(cookieParser());
 
@@ -24,7 +19,7 @@ app.use(errorMiddleware);
 
 const bootstrap = async () => {
   try {
-    const PORT = process.env.PORT || 6000;
+    const PORT = process.env.PORT || 4000;
     mongoose
       .connect(process.env.MONGODB_URL)
       .then(() => console.log("MongoDB connected"));

@@ -8,12 +8,14 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useCurrentChat } from "@/hooks/useCurrentChat";
 import Settings from "./Settings";
+import { useAuth } from "@/hooks/useAuth";
 
 interface Props {
   contacts: IUser[];
 }
 const ContactList: FC<Props> = ({ contacts }) => {
   const [query, setQuery] = useState("");
+  const { onlineUsers } = useAuth();
 
   const router = useRouter();
   const { setCurrentChat, currentChat } = useCurrentChat();
@@ -49,7 +51,9 @@ const ContactList: FC<Props> = ({ contacts }) => {
                 {contact.email[0]}
               </AvatarFallback>
             </Avatar>
-            <div className="size-3 bg-green-500 absolute rounded-full bottom-0 right-0 !z-50" />
+            {onlineUsers.some((item) => item._id === contact._id) && (
+              <div className="size-3 bg-green-500 absolute rounded-full bottom-0 right-0 !z-50" />
+            )}
           </div>
 
           <div>
@@ -68,6 +72,8 @@ const ContactList: FC<Props> = ({ contacts }) => {
       </div>
     );
   };
+
+  console.log(onlineUsers);
 
   return (
     <>

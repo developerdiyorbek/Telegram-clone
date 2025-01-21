@@ -1,7 +1,7 @@
 "use client";
 
 import ContactList from "./_components/ContactList";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import AddContact from "./_components/AddContact";
 import { useCurrentChat } from "@/hooks/useCurrentChat";
@@ -19,13 +19,17 @@ import { generateToken } from "@/lib/generateToken";
 import toast from "react-hot-toast";
 import { isAxiosError } from "axios";
 import { Loader2 } from "lucide-react";
+import { io } from "socket.io-client";
+import { useAuth } from "@/hooks/useAuth";
 
 function Page() {
   const [contacts, setContacts] = useState<IUser[]>([]);
   const { currentChat } = useCurrentChat();
   const { setCreating, setLoading, isLoading } = useLoading();
   const { data: session } = useSession();
+  const { setOnlineUsers } = useAuth();
   const router = useRouter();
+  const socket = useRef<ReturnType<typeof io> | null>(null);
 
   const contactForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
@@ -57,10 +61,25 @@ function Page() {
 
   useEffect(() => {
     router.replace("/");
+
+    socket.current = io("ws://localhost:9000", {
+      transports: ["websocket"],
+    });
+
+    return () => {
+      socket.current?.disconnect();
+    };
   }, []);
 
   useEffect(() => {
     if (session?.currentUser?._id) {
+      socket.current?.emit("addOnlineUser", session.currentUser);
+      socket.current?.on(
+        "getOnlineUsers",
+        (data: { socketId: string; user: IUser }[]) => {
+          setOnlineUsers(data.map((item) => item.user));
+        }
+      );
       getContacts();
     }
   }, [session?.currentUser]);
