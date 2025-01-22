@@ -73,8 +73,6 @@ const ContactList: FC<Props> = ({ contacts }) => {
     );
   };
 
-  console.log(onlineUsers);
-
   return (
     <>
       {/* Top bar */}

@@ -1,32 +1,34 @@
-import MessageCard from "@/components/cards/MessageCard";
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { messageSchema } from "@/lib/validation";
+import { Paperclip, Send, Smile } from "lucide-react";
+import { FC, useRef } from "react";
+import { UseFormReturn } from "react-hook-form";
+import { z } from "zod";
+import emojies from "@emoji-mart/data";
+import Picker from "@emoji-mart/react";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { messageSchema } from "@/lib/validation";
-import { Paperclip, Send, Smile } from "lucide-react";
-import { UseFormReturn } from "react-hook-form";
-import { z } from "zod";
-import emojies from "@emoji-mart/data";
-import Picker from "@emoji-mart/react";
 import { useTheme } from "next-themes";
-import { useRef } from "react";
+import { IMessage } from "@/types";
+import { useLoading } from "@/hooks/useLoading";
+import ChatLoading from "./ChatLoading";
+import MessageCard from "@/components/cards/MessageCard";
 
-interface ChatMessagesProps {
-  messageForm: UseFormReturn<z.infer<typeof messageSchema>>;
+interface Props {
   onSendMessage: (values: z.infer<typeof messageSchema>) => void;
-  messages: { text: string; id: number }[];
+  messageForm: UseFormReturn<z.infer<typeof messageSchema>>;
+  messages: IMessage[];
 }
+const Chat: FC<Props> = ({ onSendMessage, messageForm, messages }) => {
+  const { loadMessages } = useLoading();
 
-function ChatMessages({
-  messageForm,
-  onSendMessage,
-  messages,
-}: ChatMessagesProps) {
   const { resolvedTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement | null>(null);
 
@@ -37,6 +39,7 @@ function ChatMessages({
     const text = messageForm.getValues("text");
     const start = input.selectionStart ?? 0;
     const end = input.selectionEnd ?? 0;
+
     const newText = text.slice(0, start) + emoji + text.slice(end);
     messageForm.setValue("text", newText);
 
@@ -47,16 +50,27 @@ function ChatMessages({
 
   return (
     <div className="flex flex-col justify-end z-40 min-h-[92vh]">
-      {messages.map((message) => (
-        <MessageCard key={message.id} isReceived />
+      {/* Loading */}
+      {loadMessages && <ChatLoading />}
+
+      {/* Messages */}
+      {messages.map((message, index) => (
+        <MessageCard key={index} message={message} />
       ))}
 
-      {/* <div className='w-full h-[88vh] flex items-center justify-center'>
-				<div className='text-[100px] cursor-pointer' onClick={() => onSendMessage({ text: '✋' })}>
-					✋
-				</div>
-			</div> */}
+      {/* Start conversation */}
+      {messages.length === 0 && (
+        <div className="w-full h-[88vh] flex items-center justify-center">
+          <div
+            className="text-[100px] cursor-pointer"
+            onClick={() => onSendMessage({ text: "✋" })}
+          >
+            ✋
+          </div>
+        </div>
+      )}
 
+      {/* Message input */}
       <Form {...messageForm}>
         <form
           onSubmit={messageForm.handleSubmit(onSendMessage)}
@@ -107,6 +121,6 @@ function ChatMessages({
       </Form>
     </div>
   );
-}
+};
 
-export default ChatMessages;
+export default Chat;

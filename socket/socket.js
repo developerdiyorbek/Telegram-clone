@@ -21,11 +21,13 @@ const getSocketId = (userId) => {
 };
 
 io.on("connection", (socket) => {
+  // add online user
   socket.on("addOnlineUser", (user) => {
     addOnlineUser(user, socket.id);
     io.emit("getOnlineUsers", users);
   });
 
+  // create contact
   socket.on("createContact", ({ currentUser, receiver }) => {
     const receiverSocketId = getSocketId(receiver._id);
     if (receiverSocketId) {
@@ -33,6 +35,20 @@ io.on("connection", (socket) => {
     }
   });
 
+  // messages
+  socket.on("sendMessage", ({ newMessage, receiver, sender }) => {
+    const receiverSocketId = getSocketId(receiver?._id);
+
+    if (receiverSocketId) {
+      socket.to(receiverSocketId).emit("getNewMessage", {
+        newMessage,
+        receiver,
+        sender,
+      });
+    }
+  });
+
+  // disconnect
   socket.on("disconnect", () => {
     removeOnlineUser(socket.id);
     io.emit("getOnlineUsers", users);

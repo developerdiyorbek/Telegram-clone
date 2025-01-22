@@ -1,23 +1,32 @@
+import { useCurrentChat } from "@/hooks/useCurrentChat";
 import { cn } from "@/lib/utils";
+import { IMessage } from "@/types";
 
 interface Props {
-  isReceived?: boolean;
+  message: IMessage;
 }
-const MessageCard = ({ isReceived }: Props) => {
+
+const MessageCard = ({ message }: Props) => {
+  const { currentChat } = useCurrentChat();
+
   return (
     <div
       className={cn(
         "m-2.5 font-medium text-xs flex",
-        isReceived ? "justify-start" : "justify-end"
+        message.receiver._id === currentChat?._id
+          ? "justify-start"
+          : "justify-end"
       )}
     >
       <div
         className={cn(
           "relative inline p-2 pl-2.5 pr-12 max-w-full",
-          isReceived ? "bg-primary" : "bg-secondary"
+          message.receiver._id === currentChat?._id
+            ? "bg-primary"
+            : "bg-secondary"
         )}
       >
-        <p className="text-sm text-white">Hello world</p>
+        <p className="text-sm text-white">{message.text}</p>
         <span className="text-xs right-1 bottom-0 absolute opacity-60">✓</span>
       </div>
     </div>
