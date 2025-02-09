@@ -5,7 +5,7 @@ import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { messageSchema } from "@/lib/validation";
 import { Paperclip, Send, Smile } from "lucide-react";
-import { FC, useRef } from "react";
+import { FC, useEffect, useRef } from "react";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import emojies from "@emoji-mart/data";
@@ -22,15 +22,27 @@ import ChatLoading from "./ChatLoading";
 import MessageCard from "@/components/cards/MessageCard";
 
 interface Props {
-  onSendMessage: (values: z.infer<typeof messageSchema>) => void;
+  onSendMessage: (values: z.infer<typeof messageSchema>) => Promise<void>;
   messageForm: UseFormReturn<z.infer<typeof messageSchema>>;
   messages: IMessage[];
+  onReadMessages: () => Promise<void>;
 }
-const Chat: FC<Props> = ({ onSendMessage, messageForm, messages }) => {
+const Chat: FC<Props> = ({
+  onSendMessage,
+  messageForm,
+  messages,
+  onReadMessages,
+}) => {
   const { loadMessages } = useLoading();
 
   const { resolvedTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const scrollRef = useRef<HTMLFormElement | null>(null);
+
+  useEffect(() => {
+    scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    onReadMessages();
+  }, [messages]);
 
   const handleEmojiSelect = (emoji: string) => {
     const input = inputRef.current;
@@ -50,15 +62,12 @@ const Chat: FC<Props> = ({ onSendMessage, messageForm, messages }) => {
 
   return (
     <div className="flex flex-col justify-end z-40 min-h-[92vh]">
-      {/* Loading */}
       {loadMessages && <ChatLoading />}
 
-      {/* Messages */}
       {messages.map((message, index) => (
         <MessageCard key={index} message={message} />
       ))}
 
-      {/* Start conversation */}
       {messages.length === 0 && (
         <div className="w-full h-[88vh] flex items-center justify-center">
           <div
@@ -70,11 +79,11 @@ const Chat: FC<Props> = ({ onSendMessage, messageForm, messages }) => {
         </div>
       )}
 
-      {/* Message input */}
       <Form {...messageForm}>
         <form
           onSubmit={messageForm.handleSubmit(onSendMessage)}
           className="w-full flex relative"
+          ref={scrollRef}
         >
           <Button size={"icon"} type="button" variant={"secondary"}>
             <Paperclip />

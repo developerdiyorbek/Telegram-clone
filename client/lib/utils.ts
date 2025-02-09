@@ -19,3 +19,7 @@ export const getSoundLabel = (value?: string) => {
       return "";
   }
 };
+
+export function sliceText(text: string, length: number) {
+  return text.length > length ? `${text.slice(0, length)}...` : text;
+}

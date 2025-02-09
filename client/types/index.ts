@@ -16,6 +16,7 @@ export interface IUser {
   notificationSound: string;
   sendingSound: string;
   contacts: IUser[];
+  lastMessage: IMessage | null;
 }
 
 export interface IMessage {
@@ -27,4 +28,5 @@ export interface IMessage {
   receiver: IUser;
   createdAt: string;
   updatedAt: string;
+  status: string;
 }

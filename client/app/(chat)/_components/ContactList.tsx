@@ -5,10 +5,12 @@ import React, { FC, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn, sliceText } from "@/lib/utils";
 import { useCurrentChat } from "@/hooks/useCurrentChat";
 import Settings from "./Settings";
 import { useAuth } from "@/hooks/useAuth";
+import { format } from "date-fns";
+import { CONST } from "@/constants";
 
 interface Props {
   contacts: IUser[];
@@ -60,15 +62,30 @@ const ContactList: FC<Props> = ({ contacts }) => {
             <h2 className="capitalize line-clamp-1 text-sm">
               {contact.email.split("@")[0]}
             </h2>
-            <p className="text-xs line-clamp-1 text-muted-foreground">
-              No message yet
+            <p
+              className={cn(
+                "text-xs line-clamp-1",
+                contact.lastMessage
+                  ? contact.lastMessage.status !== CONST.READ
+                    ? "text-foreground"
+                    : "text-muted-foreground"
+                  : "text-muted-foreground"
+              )}
+            >
+              {contact.lastMessage
+                ? sliceText(contact.lastMessage.text, 25)
+                : "No messages yet"}
             </p>
           </div>
         </div>
 
-        <div className="self-end">
-          <p className="text-xs text-muted-foreground">19:20 pm</p>
-        </div>
+        {contact.lastMessage && (
+          <div className="self-end">
+            <p className="text-xs text-muted-foreground">
+              {format(new Date(contact.lastMessage.createdAt), "hh:mm a")}
+            </p>
+          </div>
+        )}
       </div>
     );
   };
