@@ -48,6 +48,13 @@ io.on("connection", (socket) => {
     }
   });
 
+  socket.on("readMessages", ({ receiver, messages }) => {
+    const receiverSocketId = getSocketId(receiver._id);
+    if (receiverSocketId) {
+      socket.to(receiverSocketId).emit("getReadMessages", messages);
+    }
+  });
+
   // disconnect
   socket.on("disconnect", () => {
     removeOnlineUser(socket.id);
