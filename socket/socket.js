@@ -48,12 +48,38 @@ io.on("connection", (socket) => {
     }
   });
 
+  // read messages
   socket.on("readMessages", ({ receiver, messages }) => {
     const receiverSocketId = getSocketId(receiver._id);
     if (receiverSocketId) {
       socket.to(receiverSocketId).emit("getReadMessages", messages);
     }
   });
+
+  // update message
+  socket.on("updateMessage", ({ updatedMessage, receiver, sender }) => {
+    const receiverSocketId = getSocketId(receiver._id);
+    if (receiverSocketId) {
+      socket
+        .to(receiverSocketId)
+        .emit("getUpdatedMessage", { updatedMessage, sender, receiver });
+    }
+  });
+
+  // delete message
+  socket.on(
+    "deleteMessage",
+    ({ deletedMessage, filteredMessages, sender, receiver }) => {
+      const receiverSocketId = getSocketId(receiver._id);
+      if (receiverSocketId) {
+        socket.to(receiverSocketId).emit("getDeletedMessage", {
+          deletedMessage,
+          sender,
+          filteredMessages,
+        });
+      }
+    }
+  );
 
   // disconnect
   socket.on("disconnect", () => {

@@ -20,22 +20,28 @@ import { IMessage } from "@/types";
 import { useLoading } from "@/hooks/useLoading";
 import ChatLoading from "./ChatLoading";
 import MessageCard from "@/components/cards/MessageCard";
+import { useCurrentChat } from "@/hooks/useCurrentChat";
 
 interface Props {
-  onSendMessage: (values: z.infer<typeof messageSchema>) => Promise<void>;
+  onSubmitMessage: (values: z.infer<typeof messageSchema>) => Promise<void>;
   messageForm: UseFormReturn<z.infer<typeof messageSchema>>;
   messages: IMessage[];
   onReadMessages: () => Promise<void>;
+  onReaction: (reaction: string, messageId: string) => Promise<void>;
+  onDeleteMessage: (messageId: string) => Promise<void>;
 }
 const Chat: FC<Props> = ({
-  onSendMessage,
+  onSubmitMessage,
   messageForm,
   messages,
   onReadMessages,
+  onReaction,
+  onDeleteMessage,
 }) => {
   const { loadMessages } = useLoading();
 
   const { resolvedTheme } = useTheme();
+  const { editedMessage } = useCurrentChat();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLFormElement | null>(null);
 
@@ -43,6 +49,13 @@ const Chat: FC<Props> = ({
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
     onReadMessages();
   }, [messages]);
+
+  useEffect(() => {
+    if (editedMessage) {
+      messageForm.setValue("text", editedMessage.text);
+      scrollRef.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [editedMessage]);
 
   const handleEmojiSelect = (emoji: string) => {
     const input = inputRef.current;
@@ -65,14 +78,19 @@ const Chat: FC<Props> = ({
       {loadMessages && <ChatLoading />}
 
       {messages.map((message, index) => (
-        <MessageCard key={index} message={message} />
+        <MessageCard
+          key={index}
+          message={message}
+          onReaction={onReaction}
+          onDeleteMessage={onDeleteMessage}
+        />
       ))}
 
       {messages.length === 0 && (
         <div className="w-full h-[88vh] flex items-center justify-center">
           <div
             className="text-[100px] cursor-pointer"
-            onClick={() => onSendMessage({ text: "✋" })}
+            onClick={() => onSubmitMessage({ text: "✋" })}
           >
             ✋
           </div>
@@ -81,7 +99,7 @@ const Chat: FC<Props> = ({
 
       <Form {...messageForm}>
         <form
-          onSubmit={messageForm.handleSubmit(onSendMessage)}
+          onSubmit={messageForm.handleSubmit(onSubmitMessage)}
           className="w-full flex relative"
           ref={scrollRef}
         >
