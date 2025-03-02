@@ -81,6 +81,14 @@ io.on("connection", (socket) => {
     }
   );
 
+  // typing
+  socket.on("typing", ({ receiver, sender, message }) => {
+    const receiverSocketId = getSocketId(receiver._id);
+    if (receiverSocketId) {
+      socket.to(receiverSocketId).emit("getTyping", { sender, message });
+    }
+  });
+
   // disconnect
   socket.on("disconnect", () => {
     removeOnlineUser(socket.id);

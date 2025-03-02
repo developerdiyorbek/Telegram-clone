@@ -1,7 +1,7 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { ChangeEvent, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -31,13 +31,15 @@ interface GetSocketType {
   updatedMessage: IMessage;
   deletedMessage: IMessage;
   filteredMessages: IMessage[];
+  message: string;
 }
 
 const HomePage = () => {
   const [contacts, setContacts] = useState<IUser[]>([]);
   const [messages, setMessages] = useState<IMessage[]>([]);
 
-  const { setCreating, setLoading, isLoading, setLoadMessages } = useLoading();
+  const { setCreating, setLoading, isLoading, setLoadMessages, setTyping } =
+    useLoading();
   const { currentChat, setEditedMessage, editedMessage } = useCurrentChat();
   const { data: session } = useSession();
   const { setOnlineUsers } = useAuth();
@@ -143,11 +145,10 @@ const HomePage = () => {
       socket.current?.on(
         "getNewMessage",
         ({ newMessage, sender, receiver }: GetSocketType) => {
-          setMessages((prev) => {
-            const isExist = prev.some((item) => item._id === newMessage._id);
-            return isExist ? prev : [...prev, newMessage];
-          });
-
+          setTyping("");
+          if (CONTACT_ID === sender._id) {
+            setMessages((prev) => [...prev, newMessage]);
+          }
           setContacts((prev) => {
             return prev.map((contact) => {
               if (contact._id === sender._id) {
@@ -165,7 +166,7 @@ const HomePage = () => {
               return contact;
             });
           });
-          toast.success(`${sender?.email.split("@")[0]} sent you a message`);
+          // toast.success(`${sender?.email.split("@")[0]} sent you a message`);
           if (!receiver.muted) {
             playSound(receiver.notificationSound);
           }
@@ -184,6 +185,7 @@ const HomePage = () => {
       socket.current?.on(
         "getUpdatedMessage",
         ({ updatedMessage, sender }: GetSocketType) => {
+          setTyping("");
           setMessages((prev) =>
             prev.map((item) =>
               item._id === updatedMessage._id
@@ -235,6 +237,13 @@ const HomePage = () => {
           );
         }
       );
+
+      // typing
+      socket.current?.on("getTyping", ({ message, sender }: GetSocketType) => {
+        if (CONTACT_ID === sender._id) {
+          setTyping(message);
+        }
+      });
     }
   }, [session?.currentUser, socket]);
 
@@ -453,6 +462,14 @@ const HomePage = () => {
     }
   };
 
+  const onTyping = (e: ChangeEvent<HTMLInputElement>) => {
+    socket.current?.emit("typing", {
+      receiver: currentChat,
+      sender: session?.currentUser,
+      message: e.target.value,
+    });
+  };
+
   return (
     <>
       <div className="w-80 h-screen border-r fixed inset-0 z-50">
@@ -474,7 +491,7 @@ const HomePage = () => {
 
         {currentChat?._id && (
           <div className="w-full relative">
-            <TopChat />
+            <TopChat messages={messages} />
             <Chat
               messageForm={messageForm}
               onSubmitMessage={onSubmitMessage}
@@ -482,6 +499,7 @@ const HomePage = () => {
               onReadMessages={onReadMessages}
               onReaction={onReaction}
               onDeleteMessage={onDeleteMessage}
+              onTyping={onTyping}
             />
           </div>
         )}

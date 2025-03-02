@@ -13,8 +13,13 @@ import {
 import { useCurrentChat } from "@/hooks/useCurrentChat";
 import { Settings2 } from "lucide-react";
 import Image from "next/image";
+import { IMessage } from "@/types";
 
-function SettingsSheet() {
+interface IProps {
+  messages: IMessage[];
+}
+
+function SettingsSheet({ messages }: IProps) {
   const { currentChat } = useCurrentChat();
   return (
     <Sheet>
@@ -23,7 +28,7 @@ function SettingsSheet() {
           <Settings2 />
         </Button>
       </SheetTrigger>
-      <SheetContent>
+      <SheetContent className="w-80 p-2 overflow-y-scroll sidebar-custom-scrollbar">
         <SheetHeader>
           <SheetTitle />
         </SheetHeader>
@@ -78,14 +83,18 @@ function SettingsSheet() {
 
           <h2 className="text-xl">Image</h2>
           <div className="flex flex-col space-y-2">
-            <div className="w-full h-36 relative">
-              <Image
-                src={"https://github.com/shadcn.png"}
-                alt={"https://github.com/shadcn.png"}
-                fill
-                className="object-cover rounded-md"
-              />
-            </div>
+            {messages
+              .filter((msg) => msg.image)
+              .map((msg) => (
+                <div className="w-full h-36 relative" key={msg._id}>
+                  <Image
+                    src={msg.image}
+                    alt={msg._id}
+                    fill
+                    className="object-cover rounded-md"
+                  />
+                </div>
+              ))}
           </div>
         </div>
       </SheetContent>

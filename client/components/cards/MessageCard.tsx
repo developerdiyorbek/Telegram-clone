@@ -11,6 +11,7 @@ import {
   ContextMenuSeparator,
   ContextMenuTrigger,
 } from "../ui/context-menu";
+import Image from "next/image";
 
 interface Props {
   message: IMessage;
@@ -42,7 +43,17 @@ const MessageCard = ({ message, onReaction, onDeleteMessage }: Props) => {
                 : "bg-secondary"
             )}
           >
-            <p className="text-sm text-white">{message.text}</p>
+            {message.image && (
+              <Image
+                src={message.image}
+                alt={message.text}
+                width={300}
+                height={300}
+              />
+            )}
+            {message.text.length > 0 && (
+              <p className="text-sm text-white">{message.text}</p>
+            )}
             <div className="right-1 bottom-0 absolute opacity-60 text-[9px] flex gap-[3px]">
               <p>{format(message.updatedAt, "hh:mm")}</p>
               <div className="self-end">
@@ -80,13 +91,15 @@ const MessageCard = ({ message, onReaction, onDeleteMessage }: Props) => {
         {message.sender._id !== currentChat?._id && (
           <>
             <ContextMenuSeparator />
-            <ContextMenuItem
-              className="cursor-pointer"
-              onClick={() => setEditedMessage(message)}
-            >
-              <Edit2 size={14} className="mr-2" />
-              <span>Edit</span>
-            </ContextMenuItem>
+            {!message.image && (
+              <ContextMenuItem
+                className="cursor-pointer"
+                onClick={() => setEditedMessage(message)}
+              >
+                <Edit2 size={14} className="mr-2" />
+                <span>Edit</span>
+              </ContextMenuItem>
+            )}
             <ContextMenuItem
               className="cursor-pointer"
               onClick={() => onDeleteMessage(message._id)}
