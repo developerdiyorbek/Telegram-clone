@@ -4,7 +4,6 @@ import { IUser } from "@/types";
 import React, { FC, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useRouter } from "next/navigation";
 import { cn, sliceText } from "@/lib/utils";
 import { useCurrentChat } from "@/hooks/useCurrentChat";
 import Settings from "./Settings";
@@ -22,7 +21,6 @@ const ContactList: FC<Props> = ({ contacts }) => {
   const { onlineUsers } = useAuth();
   const { data: session } = useSession();
 
-  const router = useRouter();
   const { setCurrentChat, currentChat } = useCurrentChat();
 
   const filteredContacts = contacts
@@ -43,7 +41,6 @@ const ContactList: FC<Props> = ({ contacts }) => {
     const onChat = () => {
       if (currentChat?._id === contact._id) return;
       setCurrentChat(contact);
-      router.push(`/?chat=${contact._id}`);
     };
 
     return (
@@ -71,7 +68,7 @@ const ContactList: FC<Props> = ({ contacts }) => {
             )}
           </div>
 
-          <div>
+          <div className="max-md:hidden">
             <h2 className="capitalize line-clamp-1 text-sm">
               {contact.email.split("@")[0]}
             </h2>
@@ -125,7 +122,7 @@ const ContactList: FC<Props> = ({ contacts }) => {
         </div>
 
         {contact.lastMessage && (
-          <div className="self-end">
+          <div className="self-end max-md:hidden">
             <p className="text-xs text-muted-foreground">
               {format(new Date(contact.lastMessage.createdAt), "hh:mm a")}
             </p>
@@ -142,7 +139,7 @@ const ContactList: FC<Props> = ({ contacts }) => {
         <Settings />
         <div className="m-2 w-full">
           <Input
-            className="bg-secondary"
+            className="bg-secondary max-md:hidden"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             type="text"
@@ -151,15 +148,17 @@ const ContactList: FC<Props> = ({ contacts }) => {
         </div>
       </div>
 
-      {filteredContacts.length === 0 ? (
-        <div className="w-full h-[95vh] flex justify-center items-center text-center text-muted-foreground">
-          <p>Contact list is empty</p>
-        </div>
-      ) : (
-        filteredContacts.map((contact) => (
-          <div key={contact._id}>{renderContact(contact)}</div>
-        ))
-      )}
+      <div className="max-md:mt-2">
+        {filteredContacts.length === 0 ? (
+          <div className="w-full h-[95vh] flex justify-center items-center text-center text-muted-foreground">
+            <p>Contact list is empty</p>
+          </div>
+        ) : (
+          filteredContacts.map((contact) => (
+            <div key={contact._id}>{renderContact(contact)}</div>
+          ))
+        )}
+      </div>
     </>
   );
 };

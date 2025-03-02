@@ -1,16 +1,26 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useCurrentChat } from "@/hooks/useCurrentChat";
-import SettingsSheet from "./SettingsSheet";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
+import { useCurrentChat } from "@/hooks/useCurrentChat";
 import { useLoading } from "@/hooks/useLoading";
 import { sliceText } from "@/lib/utils";
 import { IMessage } from "@/types";
+import { Settings2 } from "lucide-react";
+import Image from "next/image";
+import { FC } from "react";
 
-interface IProps {
+interface Props {
   messages: IMessage[];
 }
-
-const TopChat = ({ messages }: IProps) => {
+const TopChat: FC<Props> = ({ messages }) => {
   const { currentChat } = useCurrentChat();
   const { onlineUsers } = useAuth();
   const { typing } = useLoading();
@@ -30,34 +40,131 @@ const TopChat = ({ messages }: IProps) => {
         </Avatar>
         <div className="ml-2">
           <h2 className="font-medium text-sm">{currentChat?.email}</h2>
-          {typing.length > 0 ? (
-            <div className="text-xs flex items-center gap-1 text-muted-foreground">
-              <p className="text-secondary-foreground animate-pulse line-clamp-1">
-                {sliceText(typing, 20)}
-              </p>
-              <div className="self-end mb-1">
-                <div className="flex justify-center items-center gap-1">
-                  <div className="w-1 h-1 bg-secondary-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="w-1 h-1 bg-secondary-foreground rounded-full animate-bounce [animation-delay:-0.10s]"></div>
-                  <div className="w-1 h-1 bg-secondary-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+
+          {currentChat?._id === typing?.sender?._id
+            ? typing?.message.length > 0 && (
+                <div className="text-xs flex items-center gap-1 text-muted-foreground">
+                  <p className="text-secondary-foreground animate-pulse line-clamp-1">
+                    {sliceText(typing?.message, 20)}
+                  </p>
+                  <div className="self-end mb-1">
+                    <div className="flex justify-center items-center gap-1">
+                      <div className="w-1 h-1 bg-secondary-foreground rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                      <div className="w-1 h-1 bg-secondary-foreground rounded-full animate-bounce [animation-delay:-0.10s]"></div>
+                      <div className="w-1 h-1 bg-secondary-foreground rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
-          ) : (
+              )
+            : typing.message && (
+                <p className="text-xs">
+                  {onlineUsers.some((user) => user._id === currentChat?._id) ? (
+                    <>
+                      <span className="text-green-500">●</span> Online
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-muted-foreground">●</span> Last seen
+                      recently
+                    </>
+                  )}
+                </p>
+              )}
+
+          {!typing.message && (
             <p className="text-xs">
-              {onlineUsers.some((item) => item._id === currentChat?._id) ? (
-                <span className="text-green-500">● online</span>
+              {onlineUsers.some((user) => user._id === currentChat?._id) ? (
+                <>
+                  <span className="text-green-500">●</span> Online
+                </>
               ) : (
-                <span className="text-muted-foreground">
-                  ● Last seen recently
-                </span>
+                <>
+                  <span className="text-muted-foreground">●</span> Last seen
+                  recently
+                </>
               )}
             </p>
           )}
         </div>
       </div>
 
-      <SettingsSheet messages={messages} />
+      <Sheet>
+        <SheetTrigger asChild>
+          <Button size={"icon"} variant={"secondary"}>
+            <Settings2 />
+          </Button>
+        </SheetTrigger>
+        <SheetContent className="w-80 max-md:w-full p-2 overflow-y-scroll sidebar-custom-scrollbar">
+          <SheetHeader>
+            <SheetTitle />
+          </SheetHeader>
+          <div className="mx-auto w-1/2 max-md:w-1/4 h-36 relative">
+            <Avatar className="w-full h-36">
+              <AvatarImage
+                src={currentChat?.avatar}
+                alt={currentChat?.email}
+                className="object-cover"
+              />
+              <AvatarFallback className="text-6xl uppercase font-spaceGrotesk">
+                {currentChat?.email[0]}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+
+          <Separator className="my-2" />
+
+          <h1 className="text-center capitalize font-spaceGrotesk text-xl">
+            {currentChat?.email}
+          </h1>
+
+          <div className="flex flex-col space-y-1">
+            {currentChat?.firstName && (
+              <div className="flex items-center gap-1 mt-4">
+                <p className="font-spaceGrotesk">First Name: </p>
+                <p className="font-spaceGrotesk text-muted-foreground">
+                  {currentChat?.firstName}
+                </p>
+              </div>
+            )}
+            {currentChat?.lastName && (
+              <div className="flex items-center gap-1 mt-4">
+                <p className="font-spaceGrotesk">Last Name: </p>
+                <p className="font-spaceGrotesk text-muted-foreground">
+                  {currentChat?.lastName}
+                </p>
+              </div>
+            )}
+            {currentChat?.bio && (
+              <div className="flex items-center gap-1 mt-4">
+                <p className="font-spaceGrotesk">
+                  About:{" "}
+                  <span className="font-spaceGrotesk text-muted-foreground">
+                    {currentChat?.bio}
+                  </span>
+                </p>
+              </div>
+            )}
+
+            <Separator className="my-2" />
+
+            <h2 className="text-xl">Image</h2>
+            <div className="flex flex-col space-y-2">
+              {messages
+                .filter((msg) => msg.image)
+                .map((msg) => (
+                  <div className="w-full h-36 relative" key={msg._id}>
+                    <Image
+                      src={msg.image}
+                      alt={msg._id}
+                      fill
+                      className="object-cover rounded-md"
+                    />
+                  </div>
+                ))}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };

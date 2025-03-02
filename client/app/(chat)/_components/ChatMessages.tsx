@@ -29,6 +29,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { UploadDropzone } from "@/lib/uploadthing";
+import { useSession } from "next-auth/react";
 
 interface Props {
   onSubmitMessage: (values: z.infer<typeof messageSchema>) => Promise<void>;
@@ -55,6 +56,16 @@ const Chat: FC<Props> = ({
   const { editedMessage, setEditedMessage } = useCurrentChat();
   const inputRef = useRef<HTMLInputElement | null>(null);
   const scrollRef = useRef<HTMLFormElement | null>(null);
+  const { data: session } = useSession();
+  const { currentChat } = useCurrentChat();
+
+  const filteredMessages = messages.filter(
+    (message) =>
+      (message.sender._id === session?.currentUser?._id &&
+        message.receiver._id === currentChat?._id) ||
+      (message.sender._id === currentChat?._id &&
+        message.receiver._id === session?.currentUser?._id)
+  );
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -88,7 +99,7 @@ const Chat: FC<Props> = ({
     <div className="flex flex-col justify-end z-40 min-h-[92vh]">
       {loadMessages && <ChatLoading />}
 
-      {messages.map((message, index) => (
+      {filteredMessages.map((message, index) => (
         <MessageCard
           key={index}
           message={message}

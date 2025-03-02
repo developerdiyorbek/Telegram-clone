@@ -72,7 +72,7 @@ const Settings = () => {
     <>
       <Popover>
         <PopoverTrigger asChild>
-          <Button size={"icon"} variant={"secondary"}>
+          <Button size={"icon"} variant={"secondary"} className="max-md:w-full">
             <Menu />
           </Button>
         </PopoverTrigger>
@@ -172,7 +172,7 @@ const Settings = () => {
                 className="object-cover"
               />
               <AvatarFallback className="text-6xl uppercase font-spaceGrotesk">
-                SB
+                {session?.currentUser?.email[0].charAt(0)}
               </AvatarFallback>
             </Avatar>
             <UploadButton

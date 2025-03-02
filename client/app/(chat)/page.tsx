@@ -2,7 +2,6 @@
 
 import { Loader2 } from "lucide-react";
 import { ChangeEvent, useEffect, useRef, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { emailSchema, messageSchema } from "@/lib/validation";
@@ -45,10 +44,7 @@ const HomePage = () => {
   const { setOnlineUsers } = useAuth();
   const { playSound } = useAudio();
 
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const socket = useRef<ReturnType<typeof io> | null>(null);
-  const CONTACT_ID = searchParams.get("chat");
 
   const contactForm = useForm<z.infer<typeof emailSchema>>({
     resolver: zodResolver(emailSchema),
@@ -109,8 +105,6 @@ const HomePage = () => {
   };
 
   useEffect(() => {
-    router.replace("/");
-
     socket.current = io("ws://localhost:9000", {
       transports: ["websocket"],
     });
@@ -145,8 +139,8 @@ const HomePage = () => {
       socket.current?.on(
         "getNewMessage",
         ({ newMessage, sender, receiver }: GetSocketType) => {
-          setTyping("");
-          if (CONTACT_ID === sender._id) {
+          setTyping({ message: "", sender: null });
+          if (currentChat?._id === newMessage.sender._id) {
             setMessages((prev) => [...prev, newMessage]);
           }
           setContacts((prev) => {
@@ -157,7 +151,7 @@ const HomePage = () => {
                   lastMessage: {
                     ...newMessage,
                     status:
-                      CONTACT_ID === sender._id
+                      currentChat?._id === sender._id
                         ? CONST.READ
                         : newMessage.status,
                   },
@@ -185,7 +179,7 @@ const HomePage = () => {
       socket.current?.on(
         "getUpdatedMessage",
         ({ updatedMessage, sender }: GetSocketType) => {
-          setTyping("");
+          setTyping({ message: "", sender: null });
           setMessages((prev) =>
             prev.map((item) =>
               item._id === updatedMessage._id
@@ -240,8 +234,8 @@ const HomePage = () => {
 
       // typing
       socket.current?.on("getTyping", ({ message, sender }: GetSocketType) => {
-        if (CONTACT_ID === sender._id) {
-          setTyping(message);
+        if (currentChat?._id === sender._id) {
+          setTyping({ message, sender });
         }
       });
     }
@@ -318,6 +312,10 @@ const HomePage = () => {
         receiver: data.receiver,
         sender: data.sender,
       });
+
+      if (!data.sender.muted) {
+        playSound(data?.sender?.sendingSound);
+      }
     } catch {
       toast.error("Cannot send message");
     } finally {
@@ -472,7 +470,7 @@ const HomePage = () => {
 
   return (
     <>
-      <div className="w-80 h-screen border-r fixed inset-0 z-50">
+      <div className="w-80 max-md:w-16 h-screen border-r fixed inset-0 z-50">
         {isLoading && (
           <div className="w-full h-[95vh] flex justify-center items-center">
             <Loader2 size={50} className="animate-spin" />
